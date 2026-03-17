@@ -1,11 +1,18 @@
 # See docs at: https://mystmd.org/guide/frontmatter
 version: 1
+format: jupyter-book
 project:
   id: 8d6282a6-4c6d-4f83-b6c6-ee5a591f8a02
   title: Solving LinkedIn Minigames with Linear Optimization
+  subject: Solving LinkedIn Minigames with Linear Optimization
+  subtitle: Solving LinkedIn Minigames with Linear Optimization by Pyomo and NetworkX libraries
   description: Repository of Jupyter Notebooks presenting examples on how to solve LinkedIn minigames by using Python libraries, such as Pyomo, for mathematical modeling, and NetworkX, for graph modeling.
   keywords:
     - LinkedIn Minigames
+    - LinkedIn Queens
+    - LinkedIn Tango
+    - LinkedIn Zip
+    - LinkedIn Mini Sudoku
     - Linear Optimization
     - Python
     - Pyomo
@@ -24,7 +31,7 @@ project:
   toc:
     - title: Introduction
       file: intro.md
-    - title: LinkedIn Minigames
+    - title: How to Solve
       children:
       - title: Queens
         file: notebooks/1-queens.ipynb
@@ -34,6 +41,26 @@ project:
         file: notebooks/3-zip.ipynb
       - title: Mini Sudoku
         file: notebooks/4-mini-sudoku.ipynb
+    - title: Some Useful Python Concepts
+      children:
+      - title: Chained and Multiple Assigments
+        url: https://www.w3schools.com/python/python_variables_multiple.asp
+      - title: Python Comprehensions
+        url: https://www.geeksforgeeks.org/python/comprehensions-in-python/
+      - title: Lambda Functions
+        url: https://www.geeksforgeeks.org/python/python-lambda-anonymous-functions-filter-map-reduce/
+      - title: Classes and Objects
+        url: https://www.geeksforgeeks.org/python/python-classes-and-objects/
+    - title: Python Libraries Used in This Book
+      children:
+      - title: Pyomo
+        url: https://www.pyomo.org/
+      - title: Gurobipy
+        url: https://www.gurobi.com/faqs/gurobipy/
+      - title: NetworkX
+        url: https://networkx.org/
+      - title: Matplotlib
+        url: https://matplotlib.org/
   abbreviations:
     BLO: Binary Linear Optimization
     BLOP: Binary Linear Optimization Problem
@@ -42,19 +69,25 @@ project:
     MZT: Miller-Tucker-Zemlin
     NLO: Non-Linear Optimization
     NLOP: Non-Linear Optimization Problem
-  exports:
-    - format: pdf
-      template: lapreprint-typst
-      output: document.pdf
-      # articles: intro.md
   kernelspec:
     name: python3
     display_name: 'Python 3'
+  exports:
+    - format: pdf
+      template: lapreprint-typst
+      articles:
+        - intro.md
+        - notebooks/1-queens.ipynb
+        - notebooks/2-tango.ipynb
+        - notebooks/3-zip.ipynb
+        - notebooks/4-mini-sudoku.ipynb
 site:
   template: book-theme
-  nav:
-    - title: Internal page
-      url: /website-metadata
   options:
-    favicon: favicon.ico
-    logo: site_logo.png
+    folders: true
+    favicon: assets/logo.png
+    logo: assets/logo.png
+    logo_dark: assets/logo_dark.png
+    logo_text: Solving LinkedIn Minigames with Linear Optimization
+    outline_maxdepth: 1
+    hide_footer_links: true
