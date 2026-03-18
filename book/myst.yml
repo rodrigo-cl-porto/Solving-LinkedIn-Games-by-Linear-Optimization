@@ -31,7 +31,7 @@ project:
   open_access: true
   toc:
     - title: Introduction
-      file: intro.md
+      file: landing.md
     - title: How to Solve
       children:
       - title: Queens
@@ -71,6 +71,7 @@ project:
     NLO: Non-Linear Optimization
     NLOP: Non-Linear Optimization Problem
   kernelspec:
+    language: python
     name: python3
     display_name: 'Python 3'
   exports:

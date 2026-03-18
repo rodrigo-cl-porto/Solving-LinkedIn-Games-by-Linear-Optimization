@@ -42,16 +42,12 @@ jobs:
           node-version: 20
 
       - name: Install MyST CLI
-        run: npm install -g mystmd
-        # (opção equivalente)
-        # run: npm install -g jupyter-book
+        run: npm install -g jupyter-book
 
       - name: Build static HTML
         env:
           BASE_URL: ${{ env.BASE_URL }}
-        run: myst build --html
-        # (opção equivalente)
-        # run: jupyter-book build --html
+        run: jupyter-book build --html
 
       - name: (debug) listar saídas do build
         run: |
@@ -62,7 +58,6 @@ jobs:
       - name: Upload artifact to Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          # caminho relativo à RAIZ do repositório
           path: book/_build/html
 
       - name: Deploy to GitHub Pages
