@@ -11,3 +11,8 @@ _build/
 __pycache__/
 *.py[codz]
 *$py.class
+
+# Jupyter Lab checkpoints
+.ipynb_checkpoints
+
+*.sh

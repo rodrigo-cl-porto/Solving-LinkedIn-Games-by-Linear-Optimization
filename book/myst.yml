@@ -3,10 +3,9 @@ version: 1
 format: jupyter-book
 project:
   id: 8d6282a6-4c6d-4f83-b6c6-ee5a591f8a02
-  title: Solving LinkedIn Minigames with Linear Optimization
-  subject: Solving LinkedIn Minigames with Linear Optimization
-  subtitle: Solving LinkedIn Minigames with Linear Optimization by Pyomo and NetworkX libraries
-  description: Repository of Jupyter Notebooks presenting examples on how to solve LinkedIn minigames by using Python libraries, such as Pyomo, for mathematical modeling, and NetworkX, for graph modeling.
+  title: Solving LinkedIn Games by Linear Optimization
+  subtitle: Solving LinkedIn Games by Linear Optimization with Pyomo and NetworkX libraries
+  description: This Jupyter Book presents examples on how to solve LinkedIn minigames by using Python libraries, such as Pyomo, for mathematical modeling, and NetworkX, for graph modeling.
   keywords:
     - LinkedIn Minigames
     - LinkedIn Queens
@@ -24,8 +23,10 @@ project:
       corresponding: true
       github: rodrigo-cl-porto
       linkedin: https://www.linkedin.com/in/rodrigo-cl-porto
-  github: https://github.com/rodrigo-cl-porto/Solving-LinkedIn-Minigames-with-Linear-Optimization
-  # binder:
+  github: https://github.com/rodrigo-cl-porto/Solving-LinkedIn-Games-by-Linear-Optimization
+  social:
+    linkedin: https://www.linkedin.com/in/rodrigo-cl-porto
+    github: rodrigo-cl-porto
   license: MIT
   open_access: true
   toc:
@@ -34,13 +35,13 @@ project:
     - title: How to Solve
       children:
       - title: Queens
-        file: notebooks/1-queens.ipynb
+        file: ./notebooks/1-queens.ipynb
       - title: Tango
-        file: notebooks/2-tango.ipynb
+        file: ./notebooks/2-tango.ipynb
       - title: Zip
-        file: notebooks/3-zip.ipynb
+        file: ./notebooks/3-zip.ipynb
       - title: Mini Sudoku
-        file: notebooks/4-mini-sudoku.ipynb
+        file: ./notebooks/4-mini-sudoku.ipynb
     - title: Some Useful Python Concepts
       children:
       - title: Chained and Multiple Assigments
@@ -66,7 +67,7 @@ project:
     BLOP: Binary Linear Optimization Problem
     LO: Linear Optimization
     LOP: Linear Optimization Problem
-    MZT: Miller-Tucker-Zemlin
+    MTZ: Miller-Tucker-Zemlin
     NLO: Non-Linear Optimization
     NLOP: Non-Linear Optimization Problem
   kernelspec:
@@ -75,19 +76,12 @@ project:
   exports:
     - format: pdf
       template: lapreprint-typst
-      articles:
-        - intro.md
-        - notebooks/1-queens.ipynb
-        - notebooks/2-tango.ipynb
-        - notebooks/3-zip.ipynb
-        - notebooks/4-mini-sudoku.ipynb
 site:
   template: book-theme
   options:
     folders: true
-    favicon: assets/logo.png
-    logo: assets/logo.png
-    logo_dark: assets/logo_dark.png
-    logo_text: Solving LinkedIn Minigames with Linear Optimization
+    favicon: ./assets/logo.png
+    logo: ./assets/logo.png
+    logo_dark: ./assets/logo_dark.png
+    logo_text: Solving LinkedIn Games by Linear Optimization
     outline_maxdepth: 1
-    hide_footer_links: true
