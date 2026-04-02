@@ -89,4 +89,6 @@ site:
     favicon: ./assets/logos/logo.svg
     logo: ./assets/logos/logo.svg
     logo_dark: ./assets/logos/logo_dark.svg
-    logo_text: Solving LinkedIn Games by Linear Optimization
+    logo_text: |
+      Solving LinkedIn Games
+      by Linear Optimization
