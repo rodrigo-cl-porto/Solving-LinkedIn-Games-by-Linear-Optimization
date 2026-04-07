@@ -15,4 +15,5 @@ __pycache__/
 # Jupyter Lab checkpoints
 .ipynb_checkpoints
 
-*.sh
+# Cursor agent
+.cursor
