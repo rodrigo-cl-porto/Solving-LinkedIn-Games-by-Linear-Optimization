@@ -1,9 +1,11 @@
 from enum import StrEnum
 from math import sqrt
-import pyomo.environ as pyo
+import re
+
 import matplotlib.pyplot as plt
 import networkx as nx
-import re
+import pyomo.environ as pyo
+
 
 class RecType(StrEnum):
     ANY = "Any"
@@ -44,6 +46,14 @@ class Rectangle():
                     raise ValueError("The informed area is not a perfect square.")
                 
             self.area = area
+
+    def __eq__(self, other) -> bool:
+        return \
+            self.x == other.x and \
+            self.y == other.y and \
+            self.width == other.width and \
+            self.height == other.height
+    
     
     @staticmethod
     def __is_perfect_square(n:int) -> bool:
@@ -95,7 +105,7 @@ class Rectangle():
         if width < 1:
             raise ValueError("The width must be a positive integer.")
         
-        if type(width) != int or width % 1 != 0:
+        if width % 1 != 0:
             raise TypeError("The width must be a positive integer")
         
         self.width = width
@@ -109,7 +119,7 @@ class Rectangle():
         if height < 1:
             raise ValueError("The height must be a positive integer.")
         
-        if type(height) != int or height % 1 != 0:
+        if height % 1 != 0:
             raise TypeError("The height must be a positive integer")
         
         self.height = height
@@ -123,7 +133,7 @@ class Rectangle():
         if x < 1:
             raise ValueError("The x position must be a positive integer.")
         
-        if type(x) != int or x % 1 != 0:
+        if x % 1 != 0:
             raise TypeError("The x position must be a positive integer")
         
         self.x = x
@@ -137,7 +147,7 @@ class Rectangle():
         if y < 1:
             raise ValueError("The y position must be a positive integer.")
         
-        if type(y) != int or y % 1 != 0:
+        if y % 1 != 0:
             raise TypeError("The y position must be a positive integer")
 
         self.y = y
@@ -148,7 +158,7 @@ class Patches(pyo.ConcreteModel):
     def __init__(self, board_dims:tuple[int], rectangles:dict[str, Rectangle]):
         
         if len(rectangles) < 1:
-            raise ValueError("The tuple of rectangles cannot be empty.")
+            raise ValueError("The dictionary of rectangles cannot be empty.")
         else:
             self.Rectangles = rectangles
         
@@ -160,15 +170,15 @@ class Patches(pyo.ConcreteModel):
         # Ranges
         I = self.I = pyo.Range(m) # Row index
         J = self.J = pyo.Range(n) # Column index
-        K = self.K = pyo.RangeSet(initialize= [k.name for k in rectangles]) # Rectangle index
+        K = self.K = pyo.RangeSet(initialize=rectangles.keys()) # Rectangle index
 
         # Sets
         S = self.S = pyo.Set(initialize=lambda model: [(i, j) for i in I for j in J])
-        T = self.T = pyo.Set(initialize=[k.tip_square for k in rectangles], dimen=2)
-        V = self.V = pyo.Set(initialize=[k for k in rectangles if k.type == RecType.VERTICAL])
-        H = self.H = pyo.Set(initialize=[k for k in rectangles if k.type == RecType.HORIZONTAL])
-        Q = self.Q = pyo.Set(initialize=[k for k in rectangles if k.type == RecType.SQUARE])
-        A = self.A = pyo.Set(initialize=[k for k in rectangles if k.area is not None])
+        T = self.T = pyo.Set(initialize=[k.tip_square for k, _ in rectangles], dimen=2)
+        V = self.V = pyo.Set(initialize=[k for k, _ in rectangles if k.type == RecType.VERTICAL])
+        H = self.H = pyo.Set(initialize=[k for k, _ in rectangles if k.type == RecType.HORIZONTAL])
+        Q = self.Q = pyo.Set(initialize=[k for k, _ in rectangles if k.type == RecType.SQUARE])
+        A = self.A = pyo.Set(initialize=[k for k, _ in rectangles if k.area is not None])
 
         # Decision Variables
         x = self.x = pyo.Var(I, J, K, domain=pyo.Binary)
@@ -246,14 +256,14 @@ class Patches(pyo.ConcreteModel):
             Q,
             rule= lambda model, k: w[k] == h[k]
         )
-
+    
     
     def solve(self) -> None:
         solver = pyo.SolverFactory("gurobi")
         solver.solve(self)
 
 
-    def show(self):
+    def show(self) -> None:
         plt.figure(figsize=(3, 3))
         nx.draw(
             G= self.matrix,
@@ -272,4 +282,20 @@ class Patches(pyo.ConcreteModel):
 
 
 if __name__ == "__main__":
-    pass
+
+    # Example of Tango No. 15
+    rectangles = {
+        "yellow":  Rectangle((1, 2), RecType.ANY,      2, "#846A0B"),
+        "teal":    Rectangle((1, 4), RecType.ANY,      6, "#096B78"),
+        "purple":  Rectangle((2, 6), RecType.ANY,      2, "#5A3DB1"),
+        "green":   Rectangle((3, 1), RecType.ANY,      6, "#0A7541"),
+        "orange":  Rectangle((3, 3), RecType.VERTICAL, 2, "#EF6C00"),
+        "red":     Rectangle((4, 4), RecType.SQUARE,   4, "#E30102"),
+        "blue":    Rectangle((4, 6), RecType.ANY,      2, "#097BB1"),
+        "magenta": Rectangle((5, 1), RecType.ANY,      2, "#A01E4E"),
+        "brick":   Rectangle((6, 3), RecType.ANY,      6, "#9B3C1C"),
+        "brown":   Rectangle((6, 5), RecType.ANY,      4, "#503B36")
+    }
+    Patches((6,6), rectangles)
+    Patches.solve()
+    # Patches.show()
