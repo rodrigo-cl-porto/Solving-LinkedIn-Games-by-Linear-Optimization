@@ -248,7 +248,7 @@ class Patches(pyo.ConcreteModel):
 
         self.row_upper_bound_non_coverage_constraints = pyo.Constraint(
             I, J, K,
-            rule= lambda model, i, j, k: (r[k] + h[k] - 1) - i <= m*(1 - x[i,j,k])
+            rule= lambda model, i, j, k: (r[k] + h[k] - 1) - (i + 1) <= m*(1 - x[i,j,k])
         )
 
         self.column_lower_bound_non_coverage_constraints = pyo.Constraint(
@@ -258,7 +258,7 @@ class Patches(pyo.ConcreteModel):
 
         self.column_upper_bound_non_coverage_constraints = pyo.Constraint(
             I, J, K,
-            rule= lambda model, i, j, k: (c[k] + w[k] - 1) - j <= n*(1 - x[i,j,k])
+            rule= lambda model, i, j, k: (c[k] + w[k] - 1) - (j + 1) <= n*(1 - x[i,j,k])
         )
 
         # Tip Constraints
