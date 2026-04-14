@@ -18,8 +18,8 @@ class Rectangle():
     
     def __init__(self,
         tip_square:tuple[int],
-        type:RecType=RecType.ANY,
-        area:int=None,
+        tip_type:RecType=RecType.ANY,
+        tip_area:int=None,
         color:str="#FFFFFF",
         width:int=0,
         height:int=0,
@@ -27,24 +27,13 @@ class Rectangle():
         y:int=0
     ):
         self._tip_square = tip_square
-        self._type = type
+        self._tip_type = tip_type
+        self._tip_area = tip_area
         self._color = color
         self._width = width
         self._height = height
         self._x = x
         self._y = y
-
-        if area is not None:
-            if area < 1:
-                raise ValueError("The area must be a positive integer.")
-
-            if type == RecType.SQUARE:
-                if Rectangle.__is_perfect_square(area):
-                    self.area = area
-                else:
-                    raise ValueError("The informed area is not a perfect square.")
-                
-            self._area = area
 
     def __eq__(self, other) -> bool:
         return \
@@ -59,12 +48,12 @@ class Rectangle():
         return sqrt(n) % 1 == 0
     
     @property
-    def type(self) -> RecType:
-        return self._type
+    def tip_type(self) -> RecType:
+        return self._tip_type
     
-    @type.setter
-    def type(self, value:RecType) -> RecType:
-        self._type = value
+    @tip_type.setter
+    def tip_type(self, value:RecType) -> RecType:
+        self._tip_type = value
 
     @property
     def tip_square(self) -> tuple[int]:
@@ -75,21 +64,25 @@ class Rectangle():
         self._tip_square = value
 
     @property
-    def area(self) -> int:
-        return self._area
+    def tip_area(self) -> int:
+        return self._tip_area
     
-    @area.setter
-    def area(self, value:int):
+    @tip_area.setter
+    def tip_area(self, value:int):
         if value < 1:
             raise ValueError("The area must be a positive integer.")
 
-        if self.type == RecType.SQUARE:
+        if self.tip_type == RecType.SQUARE:
             if Rectangle.__is_perfect_square(value):
-                self._area = value
+                self._tip_area = value
             else:
                 raise ValueError("The informed area is not a perfect square.")
                 
-        self._area = value
+        self._tip_area = value
+
+    @property
+    def area(self):
+        return self._width * self._height
 
     @property
     def color(self) -> str:
@@ -183,35 +176,55 @@ class Patches(pyo.ConcreteModel):
 
         # Sets
         S = self.S = pyo.Set(initialize=lambda model: [(i, j) for i in I for j in J])
-        T = self.T = pyo.Set(initialize=lambda model: [(*k.tip_square, key) for key, k in rectangles.items()])
-        V = self.V = pyo.Set(initialize=[key for key, k in rectangles.items() if k.type == RecType.VERTICAL])
-        H = self.H = pyo.Set(initialize=[key for key, k in rectangles.items() if k.type == RecType.HORIZONTAL])
-        Q = self.Q = pyo.Set(initialize=[key for key, k in rectangles.items() if k.type == RecType.SQUARE])
-        A = self.A = pyo.Set(initialize=[key for key, k in rectangles.items() if k.area is not None])
+        W = self.W = pyo.Set(initialize=lambda model: [
+            ((i, j, k), (i,  j+1, k), (i,   j+2, k)) for i in I for j in J for k in K if j+2 in J] + [
+            ((i, j, k), (i+1,  j, k), (i+2,   j, k)) for i in I for j in J for k in K if i+2 in I] + [
+            ((i, j, k), (i,  j+1, k), (i+1, j+1, k)) for i in I for j in J for k in K if i+1 in I and j+1 in J] + [
+            ((i, j, k), (i+1,  j, k), (i+1, j+1, k)) for i in I for j in J for k in K if i+1 in I and j+1 in J]
+        )
+        print(f"W: {len(W)}")
+        T = self.T = pyo.Set(initialize=[(*k.tip_square, key) for key, k in rectangles.items()])
+        V = self.V = pyo.Set(initialize=[key for key, k in rectangles.items() if k.tip_type == RecType.VERTICAL])
+        H = self.H = pyo.Set(initialize=[key for key, k in rectangles.items() if k.tip_type == RecType.HORIZONTAL])
+        Q = self.Q = pyo.Set(initialize=[key for key, k in rectangles.items() if k.tip_type == RecType.SQUARE])
+        A = self.A = pyo.Set(initialize=[key for key, k in rectangles.items() if k.tip_area is not None])
 
         # Decision Variables
         x = self.x = pyo.Var(I, J, K, domain=pyo.Binary, initialize=0)
         c = self.c = pyo.Var(K, domain=pyo.PositiveIntegers)
-        w = self.w = pyo.Var(K, domain=pyo.PositiveIntegers)
         r = self.r = pyo.Var(K, domain=pyo.PositiveIntegers)
+        w = self.w = pyo.Var(K, domain=pyo.PositiveIntegers)
         h = self.h = pyo.Var(K, domain=pyo.PositiveIntegers)
 
         # Parameters
-        a = self.a = pyo.Param(K, initialize={key: k.area for key, k in rectangles.items() if k.area is not None})
+        a = self.a = pyo.Param(K, initialize={key: k.tip_area for key, k in rectangles.items() if k.tip_area is not None})
 
         # Objective Function
         self.obj = pyo.Objective(expr=0)
 
         # Constraints
+
         self.unique_rectangle_per_square_constraints = pyo.Constraint(
             S,
-            rule=lambda model, i, j: sum(x[i,j,k] for k in K) == 1
+            rule= lambda model, i, j: sum(x[i,j,k] for k in K) == 1
+        )
+
+        """
+        self.area_constraints = pyo.Constraint(
+            K,
+            rule= lambda model, k: sum(x[i,j,k] for i, j in S) == w[k] * h[k]
+        )
+        """
+
+        self.continuity_constraints = pyo.Constraint(
+            W,
+            rule= lambda model, i1, j1, k1, i2, j2, k2, i3, j3, k3: x[i1,j1,k1] + x[i3,j3,k3] - 1 <= x[i2,j2,k2]
         )
 
         # Rectangle-Inside-Board Constraints
         self.last_row_position_constraints = pyo.Constraint(
             K,
-            rule=lambda model, k: r[k] + h[k] - 1 <= m
+            rule= lambda model, k: r[k] + h[k] - 1 <= m
         )
 
         self.last_column_position_constraints = pyo.Constraint(
@@ -240,36 +253,15 @@ class Patches(pyo.ConcreteModel):
             rule= lambda model, i, j, k: j - (c[k] + w[k] - 1) <= n*(1 - x[i,j,k])
         )
 
-        # Square-Outside-Rectangle Constraints
-        self.row_lower_bound_non_coverage_constraints = pyo.Constraint(
-            I, J, K,
-            rule= lambda model, i, j, k: i - (r[k] - 1)  <= m*(1 - x[i,j,k])
-        )
-
-        self.row_upper_bound_non_coverage_constraints = pyo.Constraint(
-            I, J, K,
-            rule= lambda model, i, j, k: (r[k] + h[k] - 1) - (i + 1) <= m*(1 - x[i,j,k])
-        )
-
-        self.column_lower_bound_non_coverage_constraints = pyo.Constraint(
-            I, J, K,
-            rule= lambda model, i, j, k: j - (c[k] - 1) <= n*(1 - x[i,j,k])
-        )
-
-        self.column_upper_bound_non_coverage_constraints = pyo.Constraint(
-            I, J, K,
-            rule= lambda model, i, j, k: (c[k] + w[k] - 1) - (j + 1) <= n*(1 - x[i,j,k])
-        )
-
         # Tip Constraints
         self.tip_square_constraints = pyo.Constraint(
             T,
             rule= lambda model, i, j, k: x[i,j,k] == 1
         )
     
-        self.prescribed_area_constraints = pyo.Constraint(
+        self.tip_area_constraints = pyo.Constraint(
             A,
-            rule= lambda model, k: sum(x[i,j,k] for i in I for j in J) == a[k]
+            rule= lambda model, k: sum(x[i,j,k] for i, j in S) == a[k]
         )
 
         self.vertical_rectangle_constraints = pyo.Constraint(
@@ -289,7 +281,7 @@ class Patches(pyo.ConcreteModel):
     
     
     def solve(self) -> None:
-        solver = pyo.SolverFactory("cbc")
+        solver = pyo.SolverFactory("gurobi")
         solver.solve(self)
 
 

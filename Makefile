@@ -6,8 +6,9 @@ clean:
 	rm -rf .venv
 
 setup:
-	uv venv
+	uv venv --python 3.13
 	source .venv/Scripts/activate
+	uv python pin 3.13
 	uv sync
 
 start:
