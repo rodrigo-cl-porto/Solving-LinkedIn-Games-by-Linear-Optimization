@@ -2,6 +2,7 @@ from enum import StrEnum
 from math import sqrt
 import re
 
+from pyomo.opt import SolverStatus, TerminationCondition
 import matplotlib.pyplot as plt
 import networkx as nx
 import pyomo.environ as pyo
@@ -30,10 +31,19 @@ class Rectangle():
         self._tip_type = tip_type
         self._tip_area = tip_area
         self._color = color
-        self._width = width
-        self._height = height
         self._x = x
         self._y = y
+        self._width = width
+        self._height = height
+
+
+    def __repr__(self) -> str:
+        return f"Rectangle(\n\ttip_square={self.tip_square},\n\ttip_type={self.tip_type},\n\ttip_area={self.tip_area},\n\tx={self.x},\n\ty={self.y},\n\twidth={self.width},\n\theight={self.height}\n)"
+
+
+    def __str__(self) -> str:
+        return f"Rectangle(x={self.x}, y={self.y},  width={self.width}, height={self.height}, squares={self.squares})"
+    
 
     def __eq__(self, other) -> bool:
         return \
@@ -42,31 +52,37 @@ class Rectangle():
             self.width == other.width and \
             self.height == other.height
     
-    
+
     @staticmethod
     def __is_perfect_square(n:int) -> bool:
         return sqrt(n) % 1 == 0
     
+
     @property
     def tip_type(self) -> RecType:
         return self._tip_type
     
+
     @tip_type.setter
     def tip_type(self, value:RecType) -> RecType:
         self._tip_type = value
+
 
     @property
     def tip_square(self) -> tuple[int]:
         return self._tip_square
     
+
     @tip_square.setter
     def tip_square(self, value:tuple[int]):
         self._tip_square = value
+
 
     @property
     def tip_area(self) -> int:
         return self._tip_area
     
+
     @tip_area.setter
     def tip_area(self, value:int):
         if value < 1:
@@ -80,13 +96,16 @@ class Rectangle():
                 
         self._tip_area = value
 
+
     @property
     def area(self):
         return self._width * self._height
 
+
     @property
     def color(self) -> str:
         return self._color
+    
     
     @color.setter
     def color(self, value:str):
@@ -96,10 +115,12 @@ class Rectangle():
         else:
             raise ValueError("The color must be a hex code.")
     
+
     @property
     def width(self) -> int:
         return self._width
     
+
     @width.setter
     def width(self, value:int):
         if value < 1:
@@ -110,9 +131,11 @@ class Rectangle():
         
         self._width = int(value)
 
+
     @property
     def height(self) -> int:
         return self._height
+    
     
     @height.setter
     def height(self, value:int):
@@ -123,11 +146,13 @@ class Rectangle():
             raise TypeError("The height must be a positive integer")
         
         self._height = int(value)
+
     
     @property
     def x(self) -> int:
         return self._x
     
+
     @x.setter
     def x(self, value:int):
         if value < 1:
@@ -138,10 +163,12 @@ class Rectangle():
         
         self._x = int(value)
 
+
     @property
     def y(self) -> int:
         return self._y
     
+
     @y.setter
     def y(self, value:int):
         if value < 1:
@@ -151,6 +178,15 @@ class Rectangle():
             raise TypeError("The y position must be a positive integer")
 
         self._y = value
+
+
+    @property
+    def squares(self) -> tuple[tuple[int]]:
+
+        if self.x < 1 or self.y < 1 or self.width < 1 or self.height < 1:
+            return ()
+        
+        return tuple((i,j) for i in range(self.y, self.y + self.height) for j in range(self.x, self.x + self.width))
 
 
 class Patches(pyo.ConcreteModel):
@@ -176,13 +212,6 @@ class Patches(pyo.ConcreteModel):
 
         # Sets
         S = self.S = pyo.Set(initialize=lambda model: [(i, j) for i in I for j in J])
-        W = self.W = pyo.Set(initialize=lambda model: [
-            ((i, j, k), (i,  j+1, k), (i,   j+2, k)) for i in I for j in J for k in K if j+2 in J] + [
-            ((i, j, k), (i+1,  j, k), (i+2,   j, k)) for i in I for j in J for k in K if i+2 in I] + [
-            ((i, j, k), (i,  j+1, k), (i+1, j+1, k)) for i in I for j in J for k in K if i+1 in I and j+1 in J] + [
-            ((i, j, k), (i+1,  j, k), (i+1, j+1, k)) for i in I for j in J for k in K if i+1 in I and j+1 in J]
-        )
-        print(f"W: {len(W)}")
         T = self.T = pyo.Set(initialize=[(*k.tip_square, key) for key, k in rectangles.items()])
         V = self.V = pyo.Set(initialize=[key for key, k in rectangles.items() if k.tip_type == RecType.VERTICAL])
         H = self.H = pyo.Set(initialize=[key for key, k in rectangles.items() if k.tip_type == RecType.HORIZONTAL])
@@ -200,25 +229,12 @@ class Patches(pyo.ConcreteModel):
         a = self.a = pyo.Param(K, initialize={key: k.tip_area for key, k in rectangles.items() if k.tip_area is not None})
 
         # Objective Function
-        self.obj = pyo.Objective(expr=0)
+        self.obj = pyo.Objective(expr=sum(w[k] + h[k] for k in K), sense=pyo.minimize)
 
         # Constraints
-
         self.unique_rectangle_per_square_constraints = pyo.Constraint(
             S,
             rule= lambda model, i, j: sum(x[i,j,k] for k in K) == 1
-        )
-
-        """
-        self.area_constraints = pyo.Constraint(
-            K,
-            rule= lambda model, k: sum(x[i,j,k] for i, j in S) == w[k] * h[k]
-        )
-        """
-
-        self.continuity_constraints = pyo.Constraint(
-            W,
-            rule= lambda model, i1, j1, k1, i2, j2, k2, i3, j3, k3: x[i1,j1,k1] + x[i3,j3,k3] - 1 <= x[i2,j2,k2]
         )
 
         # Rectangle-Inside-Board Constraints
@@ -261,7 +277,7 @@ class Patches(pyo.ConcreteModel):
     
         self.tip_area_constraints = pyo.Constraint(
             A,
-            rule= lambda model, k: sum(x[i,j,k] for i, j in S) == a[k]
+            rule= lambda model, k: sum(x[i,j,k] for (i,j) in S) == a[k]
         )
 
         self.vertical_rectangle_constraints = pyo.Constraint(
@@ -281,24 +297,34 @@ class Patches(pyo.ConcreteModel):
     
     
     def solve(self) -> None:
-        solver = pyo.SolverFactory("gurobi")
-        solver.solve(self)
+        result = pyo.SolverFactory("highs").solve(self)
+
+        if result.Solver.status == SolverStatus.ok and result.solver.termination_condition == TerminationCondition.optimal:
+            print("Optimal solution found!")
+            for k in self.K:
+                rect = self.Rectangles[k]
+                rect.x = int(round(self.c[k].value, 0))
+                rect.y = int(round(self.r[k].value, 0))
+                rect.width = int(round(self.w[k].value, 0))
+                rect.height = int(round(self.h[k].value, 0))
+                print(f"{k}: {repr(rect)}")
+        else:
+            print("It was not possible to find a feasible solution for the game.")
+            print(result.solver)
 
 
     def show(self) -> None:
+
+        G = nx.grid_2d_graph(self.m.value, self.n.value)
         plt.figure(figsize=(3, 3))
+
         nx.draw(
-            G= self.matrix,
-            pos= {(i, j): (j, -i) for (i, j) in self.matrix.nodes()},
-            with_labels= True,
-            labels= {n: self.matrix.nodes[n]["value"] for n in self.matrix.nodes() if self.matrix.nodes[n]["value"] != 0},
-            font_color="white",
+            G,
+            pos= {(i, j): (j, -i) for (i, j) in G.nodes()},
             node_size= 1100,
             node_shape="s",
-            node_color= "#1B1F22",
+            node_color= [self.Rectangles[k].color for i in self.I for j in self.J for k in self.K if round(self.x[i,j,k].value, 0) == 1],
             width= 0,
-            edgecolors="#999999",
-            linewidths= .5,
         )
         plt.show()
 
@@ -321,11 +347,4 @@ if __name__ == "__main__":
 
     patches = Patches((6,6), rectangles)
     patches.solve()
-
-    for k in patches.K:
-        for i in patches.I:
-            for j in patches.J:
-                if patches.x[i,j,k].value == 1:
-                    print(f"{k}: ({i}, {j})")
-    
-    # patches.show()
+    patches.show()

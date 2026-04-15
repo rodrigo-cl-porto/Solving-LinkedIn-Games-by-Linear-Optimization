@@ -1,12 +1,13 @@
 [project]
 name = "Solving-LinkedIn-Games-by-Linear-Optimization"
-version = "0.1.1"
+version = "0.1.2"
 description = "Add your description here"
 readme = "README.md"
 license = { file = "LICENSE.md" }
 requires-python = ">=3.13"
 dependencies = [
     "gurobipy>=13.0.1",
+    "highspy>=1.14.0",
     "matplotlib>=3.10.8",
     "networkx>=3.6.1",
     "pyomo>=6.10.0",
@@ -15,7 +16,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ipywidgets>=8.1.8",
-    "jupyter-book>=2.1.2",
+    "jupyter-book>=2.1.4",
     "jupyterlab>=4.5.6",
     "jupyterlab-myst>=2.6.0",
 ]
